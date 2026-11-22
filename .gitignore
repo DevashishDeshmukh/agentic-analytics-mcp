@@ -8,3 +8,4 @@ __pycache__/
 evals/results/*.jsonl
 .DS_Store
 evals/results/partial/
+career/

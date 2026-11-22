@@ -2,6 +2,21 @@
 
 All notable changes to this project. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.1] - 2026-11-22
+
+Close-out of v0.1. No change to agent behaviour or results.
+
+### Added
+- Demo GIF in the README, reproducible with `vhs docs/demo.tape`.
+- `make tool` / `make tools`: call any MCP tool from the terminal through real MCP.
+- Knowledge transfer doc for v0.1 (`docs/kt/v0.1.md`).
+- Version close-out checklist in the release plan.
+
+### Changed
+- Release flow goes through pull requests; `main` is protected.
+- CLI shows `cost n/a` and the model name instead of `$None`.
+- MCP server logs muted to CRITICAL when launched by the agent.
+
 ## [0.1.0] - 2026-11-22
 
 ### Added

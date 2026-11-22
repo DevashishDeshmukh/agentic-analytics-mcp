@@ -10,7 +10,7 @@ import yaml
 from common.settings import get_settings
 
 # Keep stdio servers quiet so agent output stays readable.
-QUIET_ENV = {"FASTMCP_LOG_LEVEL": "WARNING",
+QUIET_ENV = {"FASTMCP_LOG_LEVEL": "CRITICAL",
              "TQDM_DISABLE": "1"}
 
 

@@ -5,7 +5,9 @@ get read-only SQL, the result and the documents the answer relied on.
 
 > Status: **v0.1**: foundation + basic RAG. See [RELEASE_PLAN.md](RELEASE_PLAN.md) for the roadmap.
 
-<!-- Demo GIF goes here: docs/demo.gif -->
+![Demo: baseline guesses wrong, RAG answers with citations, Postgres blocks a write](docs/demo.gif)
+
+_Regenerate with `vhs docs/demo.tape`._
 
 ## Problem
 
@@ -183,6 +185,11 @@ docs/adr                architecture decision records
 
 Adding an MCP server = one entry in [config/servers.yaml](config/servers.yaml).
 Adding an ablation = one entry in [config/features.yaml](config/features.yaml).
+
+## Learn the codebase
+
+- [Knowledge transfer: v0.1](docs/kt/v0.1.md): components, request flow, code tour, decisions, debugging, exercises
+- [Contributing](CONTRIBUTING.md): branches, release flow, commit conventions
 
 ## Decisions
 

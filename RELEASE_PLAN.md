@@ -29,6 +29,32 @@ As of: 2026-11-22
 - [ ] Resume bullet updated with real measured numbers
 - [ ] No secrets committed; `.env.example` updated
 
+## 1a. Version Close-out
+
+Run after every release, **before** starting the next version. Ships as a patch
+release (`vX.Y.1`) on the same `release/vX.Y` branch, merged to `main` by pull request.
+
+**Finish**
+- [ ] Every Definition of Done item checked; anything skipped is written in the CHANGELOG
+- [ ] Demo regenerated: `vhs docs/demo.tape`, frames checked, README GIF updated
+- [ ] Works in Claude Desktop (servers registered, one question answered end to end)
+
+**Knowledge transfer** (`docs/kt/vX.Y.md`, public)
+- [ ] What changed and why, architecture diff, new request-flow steps
+- [ ] Code tour with file:line references for every new component
+- [ ] Design decisions and trade-offs, with rejected alternatives
+- [ ] New numbers to know; bugs found (war stories); limitations and next steps
+- [ ] Debugging table and hands-on exercises for the new parts
+
+**Career** (`career/`, gitignored, private)
+- [ ] `resume.md`: bullets rewritten with the new measured numbers (replace, don't append)
+- [ ] `interview-prep.md`: new questions and answers for the new parts, STAR stories updated
+- [ ] Do the KT exercises and answer the new interview questions out loud
+
+**Ship**
+- [ ] CHANGELOG patch entry, pull request to `main`, tag `vX.Y.1`, GitHub Release
+- [ ] All processes stopped (`make down`), nothing left running
+
 ## 2. Repository Layout
 
 ```text
