@@ -29,8 +29,9 @@ def render(a) -> str:
     if a.caveats:
         lines += ["Caveats:"] + [f"- {c}" for c in a.caveats]
     u = a.usage
+    cost = f"${u['cost_usd']:.4f}" if u["cost_usd"] is not None else "cost n/a"
     lines.append(f"\n{a.timings_ms.get('total', 0)} ms | {u['input_tokens']}+{u['output_tokens']} "
-                 f"tokens | ${u['cost_usd']}")
+                 f"tokens | {cost} | {u['model']}")
     return "\n".join(lines)
 
 
