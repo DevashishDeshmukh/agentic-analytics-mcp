@@ -1,0 +1,27 @@
+{
+  "version": "v0.1",
+  "config": "rag",
+  "features": {
+    "name": "rag",
+    "rag": true,
+    "k": 6
+  },
+  "provider": "gemini",
+  "model": "gemini-3.5-flash-lite",
+  "questions": 30,
+  "exec_accuracy": 1.0,
+  "by_category": {
+    "aggregation": 1.0,
+    "filters": 1.0,
+    "joins": 1.0,
+    "simple": 1.0
+  },
+  "recall_at_5": 1.0,
+  "errors": 0,
+  "latency_p50_s": 4.44,
+  "latency_p95_s": 8.09,
+  "cost_total_usd": null,
+  "cost_per_success_usd": null,
+  "with_answer_step": false,
+  "run_at": "2026-11-22T07:01:32+00:00"
+}
