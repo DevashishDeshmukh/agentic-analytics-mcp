@@ -1,7 +1,7 @@
 COMPOSE = docker compose -f infra/docker-compose.yml --env-file .env
 CONFIG ?= rag
 
-.PHONY: help setup up down reset seed ingest bootstrap test test-unit lint check-gold eval eval-all results ask serve-warehouse serve-knowledge
+.PHONY: help setup up down reset seed ingest bootstrap test test-unit lint check-gold eval eval-all results ask serve-warehouse serve-knowledge tool tools
 
 help:            ## Show targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -58,3 +58,9 @@ serve-warehouse: ## Run warehouse-mcp over HTTP on :8001
 
 serve-knowledge: ## Run knowledge-mcp over HTTP on :8002
 	uv run python -m servers.knowledge_mcp --transport http --port 8002
+
+tool:            ## Call an MCP tool: make tool S=warehouse T=run_query A='{"sql":"SELECT 1"}'
+	uv run python scripts/mcp_call.py $(S) $(T) '$(A)'
+
+tools:           ## List every MCP tool
+	uv run python scripts/mcp_call.py --list
