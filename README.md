@@ -186,6 +186,11 @@ docs/adr                architecture decision records
 Adding an MCP server = one entry in [config/servers.yaml](config/servers.yaml).
 Adding an ablation = one entry in [config/features.yaml](config/features.yaml).
 
+## Learn the codebase
+
+- [Knowledge transfer: v0.1](docs/kt/v0.1.md): components, request flow, code tour, decisions, debugging, exercises
+- [Contributing](CONTRIBUTING.md): branches, release flow, commit conventions
+
 ## Decisions
 
 - [ADR-001: Two MCP servers split by trust boundary](docs/adr/001-two-mcp-servers.md)
