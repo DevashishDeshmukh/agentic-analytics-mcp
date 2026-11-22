@@ -1,0 +1,105 @@
+# dbt-style model documentation for the analytics warehouse.
+# Each model becomes one RAG chunk (chunk_id = table:analytics.<name>).
+version: 2
+
+models:
+  - name: regions
+    description: >
+      Sales regions. One row per region. Customers belong to a region
+      through customers.region_id.
+    meta: {owner: data-platform, updated_at: "2025-06-01", deprecated: false}
+    columns:
+      - {name: region_id, description: "Primary key."}
+      - {name: name, description: "Region name, e.g. 'Europe North', 'APAC', 'India'."}
+      - {name: country, description: "Headquarters country of the region."}
+
+  - name: customers
+    description: >
+      One row per registered customer. Use for customer counts, signups
+      (new customers), segments and regional breakdowns. Join to orders on
+      customer_id and to regions on region_id.
+    meta: {owner: data-platform, updated_at: "2025-06-01", deprecated: false, pii: [email, first_name, last_name]}
+    columns:
+      - {name: customer_id, description: "Primary key."}
+      - {name: first_name, description: "Customer first name. PII."}
+      - {name: last_name, description: "Customer last name. PII."}
+      - {name: email, description: "Customer email address. PII, do not expose in answers."}
+      - {name: region_id, description: "FK to regions.region_id. NULL for about 2% of customers with unknown region (see ISSUE-003)."}
+      - {name: segment, description: "Customer segment: 'consumer', 'small_business' or 'enterprise'."}
+      - {name: signup_date, description: "Date the customer registered. New customers in a period = customers whose signup_date falls in that period."}
+
+  - name: products
+    description: >
+      Product catalog. One row per product (SKU). Join to order_items on product_id.
+    meta: {owner: merchandising, updated_at: "2025-05-15", deprecated: false}
+    columns:
+      - {name: product_id, description: "Primary key."}
+      - {name: name, description: "Product display name."}
+      - {name: category, description: "Product category: Electronics, Books, Home, Clothing, Sports, Beauty, Toys, Grocery."}
+      - {name: price, description: "Current list price in USD."}
+      - {name: is_active, description: "TRUE if the product is currently sold; FALSE if discontinued."}
+
+  - name: orders
+    description: >
+      One row per customer order (order header). Main fact table for revenue,
+      order counts and average order value. amount is the order total in USD.
+      Revenue metrics must filter on status (see metric definitions); cancelled
+      and placed (unpaid) orders are not revenue.
+    meta: {owner: finance-analytics, updated_at: "2025-09-10", deprecated: false}
+    columns:
+      - {name: order_id, description: "Primary key."}
+      - {name: customer_id, description: "FK to customers.customer_id."}
+      - {name: order_date, description: "Date the order was placed. Use for all order and revenue time filters."}
+      - {name: status, description: "Order status: 'placed' (not yet paid/shipped), 'shipped', 'completed', 'returned', 'cancelled'."}
+      - {name: channel, description: "Sales channel: 'web', 'mobile_app', 'marketplace', 'store'. NULL for orders before 2023-03-01 (see ISSUE-001)."}
+      - {name: amount, description: "Order total in USD = SUM(order_items.quantity * order_items.unit_price). Excludes refunds."}
+
+  - name: order_items
+    description: >
+      Order line items. One row per product within an order. Use for units sold,
+      product and category level sales. Join to orders on order_id and to
+      products on product_id.
+    meta: {owner: finance-analytics, updated_at: "2025-09-10", deprecated: false}
+    columns:
+      - {name: order_item_id, description: "Primary key."}
+      - {name: order_id, description: "FK to orders.order_id."}
+      - {name: product_id, description: "FK to products.product_id."}
+      - {name: quantity, description: "Units of the product in this order line."}
+      - {name: unit_price, description: "Price paid per unit in USD after discount. Line revenue = quantity * unit_price."}
+
+  - name: payments
+    description: >
+      Payments captured for orders. One payment per non-cancelled order.
+      Use for payment method analysis. For revenue use orders, not payments.
+    meta: {owner: finance-analytics, updated_at: "2025-09-10", deprecated: false}
+    columns:
+      - {name: payment_id, description: "Primary key."}
+      - {name: order_id, description: "FK to orders.order_id."}
+      - {name: method, description: "Payment method: 'credit_card', 'debit_card', 'paypal', 'gift_card', 'bank_transfer'."}
+      - {name: amount, description: "Amount captured in USD."}
+      - {name: paid_at, description: "Timestamp the payment was captured."}
+
+  - name: refunds
+    description: >
+      Refunds issued against orders. A returned order is fully refunded; some
+      completed orders get partial refunds. Use for refund amounts, refund rate
+      and net revenue.
+    meta: {owner: finance-analytics, updated_at: "2025-09-10", deprecated: false}
+    columns:
+      - {name: refund_id, description: "Primary key."}
+      - {name: order_id, description: "FK to orders.order_id."}
+      - {name: amount, description: "Refunded amount in USD."}
+      - {name: refunded_at, description: "Date the refund was issued. Refunds are attributed to periods by this date."}
+      - {name: reason, description: "Refund reason: damaged, wrong_item, late_delivery, changed_mind, not_as_described. NULL before 2024-01-01 (see ISSUE-002)."}
+
+  - name: legacy_orders_v1
+    description: >
+      DEPRECATED. Old order export from the previous platform, retired in 2023.
+      Totals do not reconcile with finance. Do not use for any analysis; use
+      orders instead.
+    meta: {owner: data-platform, updated_at: "2023-02-01", deprecated: true}
+    columns:
+      - {name: id, description: "Old order id."}
+      - {name: cust, description: "Old customer id."}
+      - {name: dt, description: "Order date."}
+      - {name: total, description: "Order total, unreconciled."}

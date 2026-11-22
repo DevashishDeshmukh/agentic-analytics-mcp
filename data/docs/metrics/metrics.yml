@@ -1,0 +1,127 @@
+# Governed metric definitions (owner: finance-analytics unless noted).
+# Each metric becomes one RAG chunk (chunk_id = metric:<name>).
+# "Revenue statuses" = orders.status IN ('shipped', 'completed', 'returned').
+# Cancelled and placed (unpaid) orders are never revenue.
+
+metrics:
+  - name: gross_revenue
+    label: Gross revenue
+    synonyms: [revenue, sales, GMV, total sales]
+    description: >
+      Sum of order totals for orders in revenue statuses, attributed by order_date.
+      Excludes cancelled and placed orders. Does not subtract refunds.
+    sql: "SUM(o.amount) FROM analytics.orders o WHERE o.status IN ('shipped','completed','returned')"
+    tables: [analytics.orders]
+    owner: finance-analytics
+    updated_at: "2025-09-10"
+
+  - name: net_revenue
+    label: Net revenue
+    synonyms: [net sales, revenue after refunds]
+    description: >
+      Gross revenue for the period minus refunds issued in the same period.
+      Gross revenue is attributed by orders.order_date; refunds are attributed
+      by refunds.refunded_at. Compute the two sums separately and subtract.
+    sql: >
+      (SELECT SUM(amount) FROM analytics.orders WHERE status IN ('shipped','completed','returned') AND order_date in period)
+      - (SELECT COALESCE(SUM(amount),0) FROM analytics.refunds WHERE refunded_at in period)
+    tables: [analytics.orders, analytics.refunds]
+    owner: finance-analytics
+    updated_at: "2025-09-10"
+
+  - name: order_count
+    label: Order count
+    synonyms: [number of orders, orders]
+    description: >
+      Number of orders in revenue statuses, by order_date. Use this definition
+      when someone asks for "orders" in a business or trend context. If the
+      question explicitly says "any status" or "placed", count all rows.
+    sql: "COUNT(*) FROM analytics.orders WHERE status IN ('shipped','completed','returned')"
+    tables: [analytics.orders]
+    owner: finance-analytics
+    updated_at: "2025-09-10"
+
+  - name: average_order_value
+    label: Average order value (AOV)
+    synonyms: [AOV, average basket, average order size]
+    description: >
+      Gross revenue divided by order count, both using revenue statuses,
+      attributed by order_date.
+    sql: "SUM(amount) / COUNT(*) FROM analytics.orders WHERE status IN ('shipped','completed','returned')"
+    tables: [analytics.orders]
+    owner: finance-analytics
+    updated_at: "2025-09-10"
+
+  - name: units_sold
+    label: Units sold
+    synonyms: [quantity sold, items sold, volume]
+    description: >
+      Sum of order_items.quantity for orders in revenue statuses, attributed
+      by orders.order_date.
+    sql: >
+      SUM(oi.quantity) FROM analytics.order_items oi JOIN analytics.orders o ON o.order_id = oi.order_id
+      WHERE o.status IN ('shipped','completed','returned')
+    tables: [analytics.order_items, analytics.orders]
+    owner: finance-analytics
+    updated_at: "2025-09-10"
+
+  - name: refund_rate
+    label: Refund rate
+    synonyms: [return rate, refund percentage]
+    description: >
+      Share of revenue-status orders (by order_date in the period) that have at
+      least one refund, regardless of when the refund was issued.
+      refund_rate = refunded orders / order_count.
+    sql: >
+      COUNT(DISTINCT r.order_id)::numeric / COUNT(DISTINCT o.order_id)
+      FROM analytics.orders o LEFT JOIN analytics.refunds r ON r.order_id = o.order_id
+      WHERE o.status IN ('shipped','completed','returned')
+    tables: [analytics.orders, analytics.refunds]
+    owner: finance-analytics
+    updated_at: "2025-09-10"
+
+  - name: active_customers
+    label: Active customers
+    synonyms: [active users, active buyers]
+    description: >
+      OFFICIAL definition. Distinct customers with at least one revenue-status
+      order in the 90 days ending on (and including) the reference date.
+      For "as of 2024-12-31" use order_date between 2024-10-03 and 2024-12-31.
+    sql: >
+      COUNT(DISTINCT customer_id) FROM analytics.orders
+      WHERE status IN ('shipped','completed','returned')
+      AND order_date > :as_of - INTERVAL '90 days' AND order_date <= :as_of
+    tables: [analytics.orders]
+    owner: finance-analytics
+    updated_at: "2025-09-10"
+
+  - name: new_customers
+    label: New customers
+    synonyms: [signups, customer acquisition, new signups]
+    description: Customers whose signup_date falls in the period.
+    sql: "COUNT(*) FROM analytics.customers WHERE signup_date in period"
+    tables: [analytics.customers]
+    owner: growth
+    updated_at: "2025-04-02"
+
+  - name: repeat_customer_rate
+    label: Repeat customer rate
+    synonyms: [repeat purchase rate, retention rate]
+    description: >
+      Among customers with at least one revenue-status order, the share with two
+      or more revenue-status orders.
+    sql: >
+      AVG(CASE WHEN n >= 2 THEN 1.0 ELSE 0 END) FROM (SELECT customer_id, COUNT(*) n
+      FROM analytics.orders WHERE status IN ('shipped','completed','returned') GROUP BY customer_id) t
+    tables: [analytics.orders]
+    owner: growth
+    updated_at: "2025-04-02"
+
+  - name: refund_amount
+    label: Refund amount
+    synonyms: [refunds, money refunded]
+    description: Sum of refunds.amount, attributed by refunded_at.
+    sql: "SUM(amount) FROM analytics.refunds"
+    tables: [analytics.refunds]
+    owner: finance-analytics
+    updated_at: "2025-09-10"
