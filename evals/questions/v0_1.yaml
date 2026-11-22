@@ -1,0 +1,269 @@
+# v0.1 eval set: 30 questions.
+# expected_tables = tables the gold SQL needs (used for retrieval recall@k).
+# Revenue statuses = ('shipped','completed','returned') per metric definitions.
+
+- id: q001
+  category: simple
+  question: How many customers do we have in total?
+  gold_sql: SELECT COUNT(*) FROM analytics.customers
+  expected_tables: [analytics.customers]
+
+- id: q002
+  category: simple
+  question: How many products are currently active?
+  gold_sql: SELECT COUNT(*) FROM analytics.products WHERE is_active
+  expected_tables: [analytics.products]
+
+- id: q003
+  category: simple
+  question: How many orders, in any status, have an order date in 2024?
+  gold_sql: >
+    SELECT COUNT(*) FROM analytics.orders
+    WHERE order_date BETWEEN '2024-01-01' AND '2024-12-31'
+  expected_tables: [analytics.orders]
+
+- id: q004
+  category: simple
+  question: What is the average list price of all products?
+  gold_sql: SELECT AVG(price) FROM analytics.products
+  expected_tables: [analytics.products]
+
+- id: q005
+  category: simple
+  question: How many refunds were issued in 2025?
+  gold_sql: >
+    SELECT COUNT(*) FROM analytics.refunds
+    WHERE refunded_at BETWEEN '2025-01-01' AND '2025-12-31'
+  expected_tables: [analytics.refunds]
+
+- id: q006
+  category: simple
+  question: List all product categories.
+  gold_sql: SELECT DISTINCT category FROM analytics.products
+  expected_tables: [analytics.products]
+
+- id: q007
+  category: simple
+  question: How many sales regions are there?
+  gold_sql: SELECT COUNT(*) FROM analytics.regions
+  expected_tables: [analytics.regions]
+
+- id: q008
+  category: simple
+  question: What is the largest single order amount ever recorded?
+  gold_sql: SELECT MAX(amount) FROM analytics.orders
+  expected_tables: [analytics.orders]
+
+- id: q009
+  category: simple
+  question: How many orders were cancelled in 2023?
+  gold_sql: >
+    SELECT COUNT(*) FROM analytics.orders
+    WHERE status = 'cancelled' AND order_date BETWEEN '2023-01-01' AND '2023-12-31'
+  expected_tables: [analytics.orders]
+
+- id: q010
+  category: simple
+  question: How many new customers did we acquire in 2024?
+  gold_sql: >
+    SELECT COUNT(*) FROM analytics.customers
+    WHERE signup_date BETWEEN '2024-01-01' AND '2024-12-31'
+  expected_tables: [analytics.customers]
+
+- id: q011
+  category: joins
+  question: How many customers are in each region? Show the region name. Only include customers with a known region.
+  gold_sql: >
+    SELECT r.name, COUNT(*) FROM analytics.customers c
+    JOIN analytics.regions r ON r.region_id = c.region_id
+    GROUP BY r.name
+  expected_tables: [analytics.customers, analytics.regions]
+
+- id: q012
+  category: joins
+  question: How many units were sold per product category in 2024?
+  gold_sql: >
+    SELECT p.category, SUM(oi.quantity) FROM analytics.order_items oi
+    JOIN analytics.orders o ON o.order_id = oi.order_id
+    JOIN analytics.products p ON p.product_id = oi.product_id
+    WHERE o.status IN ('shipped','completed','returned')
+      AND o.order_date BETWEEN '2024-01-01' AND '2024-12-31'
+    GROUP BY p.category
+  expected_tables: [analytics.order_items, analytics.orders, analytics.products]
+
+- id: q013
+  category: joins
+  question: Which 5 customers generated the most gross revenue of all time? Give customer id and revenue.
+  gold_sql: >
+    SELECT customer_id, SUM(amount) AS revenue FROM analytics.orders
+    WHERE status IN ('shipped','completed','returned')
+    GROUP BY customer_id ORDER BY revenue DESC LIMIT 5
+  expected_tables: [analytics.orders]
+
+- id: q014
+  category: joins
+  question: What was gross revenue by sales channel in 2024?
+  gold_sql: >
+    SELECT channel, SUM(amount) FROM analytics.orders
+    WHERE status IN ('shipped','completed','returned')
+      AND order_date BETWEEN '2024-01-01' AND '2024-12-31'
+    GROUP BY channel
+  expected_tables: [analytics.orders]
+
+- id: q015
+  category: joins
+  question: What is the total payment amount by payment method for orders placed in 2025?
+  gold_sql: >
+    SELECT p.method, SUM(p.amount) FROM analytics.payments p
+    JOIN analytics.orders o ON o.order_id = p.order_id
+    WHERE o.order_date BETWEEN '2025-01-01' AND '2025-12-31'
+    GROUP BY p.method
+  expected_tables: [analytics.payments, analytics.orders]
+
+- id: q016
+  category: joins
+  question: What was the total refund amount by customer region name for refunds issued in 2024? Only include customers with a known region.
+  gold_sql: >
+    SELECT r.name, SUM(f.amount) FROM analytics.refunds f
+    JOIN analytics.orders o ON o.order_id = f.order_id
+    JOIN analytics.customers c ON c.customer_id = o.customer_id
+    JOIN analytics.regions r ON r.region_id = c.region_id
+    WHERE f.refunded_at BETWEEN '2024-01-01' AND '2024-12-31'
+    GROUP BY r.name
+  expected_tables: [analytics.refunds, analytics.orders, analytics.customers, analytics.regions]
+
+- id: q017
+  category: joins
+  question: Which product had the most units sold in 2025? Give the product name.
+  gold_sql: >
+    SELECT p.name FROM analytics.order_items oi
+    JOIN analytics.orders o ON o.order_id = oi.order_id
+    JOIN analytics.products p ON p.product_id = oi.product_id
+    WHERE o.status IN ('shipped','completed','returned')
+      AND o.order_date BETWEEN '2025-01-01' AND '2025-12-31'
+    GROUP BY p.product_id, p.name ORDER BY SUM(oi.quantity) DESC LIMIT 1
+  expected_tables: [analytics.order_items, analytics.orders, analytics.products]
+
+- id: q018
+  category: joins
+  question: How many distinct customers bought at least one Books product in 2024?
+  gold_sql: >
+    SELECT COUNT(DISTINCT o.customer_id) FROM analytics.orders o
+    JOIN analytics.order_items oi ON oi.order_id = o.order_id
+    JOIN analytics.products p ON p.product_id = oi.product_id
+    WHERE p.category = 'Books' AND o.status IN ('shipped','completed','returned')
+      AND o.order_date BETWEEN '2024-01-01' AND '2024-12-31'
+  expected_tables: [analytics.orders, analytics.order_items, analytics.products]
+
+- id: q019
+  category: aggregation
+  question: Show monthly gross revenue for 2024.
+  gold_sql: >
+    SELECT date_trunc('month', order_date)::date AS month, SUM(amount) FROM analytics.orders
+    WHERE status IN ('shipped','completed','returned')
+      AND order_date BETWEEN '2024-01-01' AND '2024-12-31'
+    GROUP BY 1
+  expected_tables: [analytics.orders]
+
+- id: q020
+  category: aggregation
+  question: What was net revenue in 2024?
+  gold_sql: >
+    SELECT
+      (SELECT SUM(amount) FROM analytics.orders
+        WHERE status IN ('shipped','completed','returned')
+          AND order_date BETWEEN '2024-01-01' AND '2024-12-31')
+      - (SELECT COALESCE(SUM(amount), 0) FROM analytics.refunds
+        WHERE refunded_at BETWEEN '2024-01-01' AND '2024-12-31')
+  expected_tables: [analytics.orders, analytics.refunds]
+
+- id: q021
+  category: aggregation
+  question: What was the average order value in Q1 2025?
+  gold_sql: >
+    SELECT SUM(amount) / COUNT(*) FROM analytics.orders
+    WHERE status IN ('shipped','completed','returned')
+      AND order_date BETWEEN '2025-01-01' AND '2025-03-31'
+  expected_tables: [analytics.orders]
+
+- id: q022
+  category: aggregation
+  question: What was the order count per quarter in 2023?
+  gold_sql: >
+    SELECT EXTRACT(QUARTER FROM order_date) AS quarter, COUNT(*) FROM analytics.orders
+    WHERE status IN ('shipped','completed','returned')
+      AND order_date BETWEEN '2023-01-01' AND '2023-12-31'
+    GROUP BY 1
+  expected_tables: [analytics.orders]
+
+- id: q023
+  category: aggregation
+  question: What was the refund rate for orders placed in 2024?
+  gold_sql: >
+    SELECT COUNT(DISTINCT r.order_id)::numeric / COUNT(DISTINCT o.order_id)
+    FROM analytics.orders o LEFT JOIN analytics.refunds r ON r.order_id = o.order_id
+    WHERE o.status IN ('shipped','completed','returned')
+      AND o.order_date BETWEEN '2024-01-01' AND '2024-12-31'
+  expected_tables: [analytics.orders, analytics.refunds]
+
+- id: q024
+  category: aggregation
+  question: Show gross revenue for each year from 2023 to 2025.
+  gold_sql: >
+    SELECT EXTRACT(YEAR FROM order_date) AS year, SUM(amount) FROM analytics.orders
+    WHERE status IN ('shipped','completed','returned')
+      AND order_date BETWEEN '2023-01-01' AND '2025-12-31'
+    GROUP BY 1
+  expected_tables: [analytics.orders]
+
+- id: q025
+  category: aggregation
+  question: How many active customers did we have as of 2024-12-31?
+  gold_sql: >
+    SELECT COUNT(DISTINCT customer_id) FROM analytics.orders
+    WHERE status IN ('shipped','completed','returned')
+      AND order_date > DATE '2024-12-31' - INTERVAL '90 days'
+      AND order_date <= DATE '2024-12-31'
+  expected_tables: [analytics.orders]
+
+- id: q026
+  category: aggregation
+  question: What is our repeat customer rate?
+  gold_sql: >
+    SELECT AVG(CASE WHEN n >= 2 THEN 1.0 ELSE 0 END) FROM (
+      SELECT customer_id, COUNT(*) AS n FROM analytics.orders
+      WHERE status IN ('shipped','completed','returned') GROUP BY customer_id) t
+  expected_tables: [analytics.orders]
+
+- id: q027
+  category: filters
+  question: How many completed orders over $500 were placed in 2025?
+  gold_sql: >
+    SELECT COUNT(*) FROM analytics.orders
+    WHERE status = 'completed' AND amount > 500
+      AND order_date BETWEEN '2025-01-01' AND '2025-12-31'
+  expected_tables: [analytics.orders]
+
+- id: q028
+  category: filters
+  question: How many enterprise customers signed up in 2023?
+  gold_sql: >
+    SELECT COUNT(*) FROM analytics.customers
+    WHERE segment = 'enterprise' AND signup_date BETWEEN '2023-01-01' AND '2023-12-31'
+  expected_tables: [analytics.customers]
+
+- id: q029
+  category: filters
+  question: How many orders, in any status, came through the mobile app in March 2024?
+  gold_sql: >
+    SELECT COUNT(*) FROM analytics.orders
+    WHERE channel = 'mobile_app' AND order_date BETWEEN '2024-03-01' AND '2024-03-31'
+  expected_tables: [analytics.orders]
+
+- id: q030
+  category: filters
+  question: How many Electronics products have a list price above $200?
+  gold_sql: >
+    SELECT COUNT(*) FROM analytics.products
+    WHERE category = 'Electronics' AND price > 200
+  expected_tables: [analytics.products]
