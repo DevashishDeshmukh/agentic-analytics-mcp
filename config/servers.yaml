@@ -1,0 +1,13 @@
+# MCP server registry. The agent connects to every server listed here and
+# discovers its tools. Adding a server = adding an entry; no agent code change.
+#
+# stdio entry:  {command: ..., args: [...]}
+# http entry:   {url: http://127.0.0.1:8001/mcp}
+
+servers:
+  warehouse:
+    command: uv
+    args: [run, --quiet, python, -m, servers.warehouse_mcp]
+  knowledge:
+    command: uv
+    args: [run, --quiet, python, -m, servers.knowledge_mcp]

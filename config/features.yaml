@@ -1,0 +1,14 @@
+# Feature flags. Each named config is one row in the results/ablation table.
+# Run with: make eval CONFIG=<name>
+
+default: rag
+
+configs:
+  # Baseline: model sees the full warehouse schema (names + types), no docs.
+  baseline:
+    rag: false
+
+  # v0.1: vector retrieval over docs; schema of retrieved tables only.
+  rag:
+    rag: true
+    k: 6

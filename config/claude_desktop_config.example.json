@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "warehouse": {
+      "command": "uv",
+      "args": ["run", "--quiet", "--directory", "/ABSOLUTE/PATH/TO/agentic-analytics", "python", "-m", "servers.warehouse_mcp"],
+      "env": {"FASTMCP_LOG_LEVEL": "WARNING"}
+    },
+    "knowledge": {
+      "command": "uv",
+      "args": ["run", "--quiet", "--directory", "/ABSOLUTE/PATH/TO/agentic-analytics", "python", "-m", "servers.knowledge_mcp"],
+      "env": {"FASTMCP_LOG_LEVEL": "WARNING"}
+    }
+  }
+}
