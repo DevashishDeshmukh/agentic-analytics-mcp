@@ -1,0 +1,27 @@
+{
+  "version": "v0.1",
+  "config": "baseline",
+  "features": {
+    "name": "baseline",
+    "rag": false,
+    "k": 6
+  },
+  "provider": "gemini",
+  "model": "gemini-3.5-flash-lite",
+  "questions": 30,
+  "exec_accuracy": 0.5667,
+  "by_category": {
+    "aggregation": 0.0,
+    "filters": 0.75,
+    "joins": 0.5,
+    "simple": 1.0
+  },
+  "recall_at_5": null,
+  "errors": 0,
+  "latency_p50_s": 4.26,
+  "latency_p95_s": 10.54,
+  "cost_total_usd": null,
+  "cost_per_success_usd": null,
+  "with_answer_step": false,
+  "run_at": "2026-11-22T06:59:16+00:00"
+}
