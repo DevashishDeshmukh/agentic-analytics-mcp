@@ -4,20 +4,25 @@
 
 | Branch | Purpose |
 |---|---|
-| `main` | Always releasable. Only release merges land here. |
-| `release/vX.Y` | Work for one version (see [RELEASE_PLAN.md](RELEASE_PLAN.md)). Kept after merge. |
-| `fix/<topic>` | Hotfix off `main`, merged back to `main` and the open release branch. |
+| `main` | Always releasable. Protected: changes arrive only through pull requests; no force pushes or deletion. |
+| `release/vX.Y` | Work for one version (see [RELEASE_PLAN.md](RELEASE_PLAN.md)). Patch releases (`vX.Y.Z`) reuse it. Kept after merge. |
+| `fix/<topic>` | Hotfix off `main`, merged back by pull request. |
 
 ## Release flow
 
 ```bash
-git switch main && git switch -c release/v0.2     # start a version
+git switch main && git pull && git switch -c release/v0.2   # start a version
 # ...atomic commits...
-make lint test check-gold eval-all                # Definition of Done
-git switch main
-git merge --no-ff release/v0.2 -m "Merge release/v0.2"
-git tag -a v0.2.0 -m "v0.2.0: retrieval quality"
+make lint test check-gold eval-all                          # Definition of Done
+git push -u origin release/v0.2
+gh pr create --base main --head release/v0.2 --title "Release v0.2: retrieval quality" --body-file <notes>
+gh pr merge --merge                                         # merge commit, keeps history grouped
+git switch main && git pull
+git tag -a v0.2.0 -m "v0.2.0: retrieval quality" && git push origin v0.2.0
+gh release create v0.2.0 --verify-tag --notes-file <notes>
 ```
+
+Then run the close-out checklist in [RELEASE_PLAN.md](RELEASE_PLAN.md#1a-version-close-out).
 
 ## Commits
 
